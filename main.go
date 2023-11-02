@@ -57,8 +57,8 @@ func main() {
 			ql.display("")
 		}
 		if name == "clear" {
-			ql = QueryList{}
-			ql.flush(file)
+			// todo: prob good idea to prompt user confirmation
+			ql.erase(file)
 		}
 		if name == "del" {
 			ql.delete(f.Value.String())
@@ -111,7 +111,7 @@ type medium struct {
 
 // flush writes the contents of in-memory QueryList onto disk.
 func (q QueryList) flush(f *os.File) error {
-	if err := f.Truncate(0); err != nil {
+	if err := q.erase(f); err != nil {
 		return err
 	}
 
@@ -122,6 +122,10 @@ func (q QueryList) flush(f *os.File) error {
 
 	_, err = f.Write(bytes)
 	return err
+}
+
+func (q QueryList) erase(f *os.File) error {
+	return f.Truncate(0)
 }
 
 // parse reads contents from disk into in-memory QueryList.
