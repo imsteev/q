@@ -5,7 +5,6 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"time"
 )
@@ -24,33 +23,36 @@ func main() {
 
 	flag.String("add", "", "-add add a named query")
 	flag.String("del", "", "-del delete query")
+	flag.String("view", "", "-view view query")
 
-	flag.Bool("init", false, "-init setup default storage")
 	flag.Bool("clear", false, "-clear clear all queries")
-	flag.Bool("list", false, "-list list all queries")
+	flag.Bool("all", false, "-all list all queries")
 
 	flag.Parse()
 	positional := flag.Args()
 
-	file, err := os.OpenFile(QUERYLIST_FILE_PATH, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	file, err := os.OpenFile(QUERYLIST_FILE_PATH, os.O_CREATE|os.O_RDWR, 0644)
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 	defer file.Close()
 
 	ql, err := parse(file)
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 
 	flag.Visit(func(f *flag.Flag) {
 		if f.Name == "add" && len(positional) != 1 {
-			log.Fatal("usage: -add <query name> [query]")
+			panic("usage: -add <query name> [query]")
 		}
 		if f.Name == "add" {
 			ql.add(f.Value.String(), positional[0])
 			ql.flush(file)
-			ql.print()
+			ql.print(f.Value.String())
+		}
+		if f.Name == "all" {
+			ql.print("")
 		}
 		if f.Name == "clear" {
 			ql = QueryList{}
@@ -60,11 +62,9 @@ func main() {
 			ql.delete(f.Value.String())
 			ql.flush(file)
 		}
-		if f.Name == "init" {
-			// create file
-		}
-		if f.Name == "list" {
-			ql.print()
+
+		if f.Name == "view" {
+			ql.print(f.Value.String())
 		}
 
 	})
@@ -79,10 +79,20 @@ func (q QueryList) add(key, val string) {
 	q[key] = val
 }
 
-func (q QueryList) print() {
-	fmt.Println("[QUERY NAME]")
-	for k, _ := range q {
-		fmt.Println(k)
+func (q QueryList) print(name string) {
+	if name != "" {
+		query, ok := q[name]
+		if !ok {
+			fmt.Println("[NOT FOUND]")
+			fmt.Println(name)
+		} else {
+			fmt.Println(name, query)
+		}
+	} else {
+		fmt.Println("[QUERY NAME]")
+		for k := range q {
+			fmt.Println(k)
+		}
 	}
 }
 
