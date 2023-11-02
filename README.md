@@ -3,6 +3,7 @@
 
 ```
 > q list
-> q add <queryname> <.sql filepath>
-> q del <queryname>
+> q add  <queryname> <sql text>
+> q del  <queryname>
+> q view <queryname>
 ```
