@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"time"
 )
 
 var QUERYLIST_FILE_PATH string
@@ -21,16 +20,7 @@ func init() {
 
 func main() {
 
-	flag.String("add", "", "-add add a named query")
-	flag.String("del", "", "-del delete query")
-	flag.String("view", "", "-view view query")
-
-	flag.Bool("clear", false, "-clear clear all queries")
-	flag.Bool("all", false, "-all list all queries")
-
-	flag.Parse()
-	positional := flag.Args()
-
+	// Setup in-memory data structure
 	file, err := os.OpenFile(QUERYLIST_FILE_PATH, os.O_CREATE|os.O_RDWR, 0644)
 	if err != nil {
 		panic(err)
@@ -42,29 +32,40 @@ func main() {
 		panic(err)
 	}
 
+	flag.String("add", "", "-add add a named query")
+	flag.String("del", "", "-del delete query")
+	flag.String("view", "", "-view view query")
+
+	flag.Bool("clear", false, "-clear clear all queries")
+	flag.Bool("all", false, "-all list all queries")
+
+	flag.Parse()
+	positional := flag.Args()
+
 	flag.Visit(func(f *flag.Flag) {
-		if f.Name == "add" && len(positional) != 1 {
+		name := f.Name
+
+		if name == "add" && len(positional) != 1 {
 			panic("usage: -add <query name> [query]")
 		}
-		if f.Name == "add" {
+		if name == "add" {
 			ql.add(f.Value.String(), positional[0])
 			ql.flush(file)
-			ql.print(f.Value.String())
+			ql.display(f.Value.String())
 		}
-		if f.Name == "all" {
-			ql.print("")
+		if name == "all" {
+			ql.display("")
 		}
-		if f.Name == "clear" {
+		if name == "clear" {
 			ql = QueryList{}
 			ql.flush(file)
 		}
-		if f.Name == "del" {
+		if name == "del" {
 			ql.delete(f.Value.String())
 			ql.flush(file)
 		}
-
-		if f.Name == "view" {
-			ql.print(f.Value.String())
+		if name == "view" {
+			ql.display(f.Value.String())
 		}
 
 	})
@@ -79,14 +80,16 @@ func (q QueryList) add(key, val string) {
 	q[key] = val
 }
 
-func (q QueryList) print(name string) {
+func (q QueryList) display(name string) {
 	if name != "" {
 		query, ok := q[name]
 		if !ok {
-			fmt.Println("[NOT FOUND]")
-			fmt.Println(name)
+			fmt.Println("❌ QUERY NOT FOUND")
 		} else {
-			fmt.Println(name, query)
+			fmt.Println("[QUERY NAME]")
+			fmt.Println(name)
+			fmt.Println("[QUERY]")
+			fmt.Println(query)
 		}
 	} else {
 		fmt.Println("[QUERY NAME]")
@@ -97,11 +100,11 @@ func (q QueryList) print(name string) {
 }
 
 type query struct {
-	Key       string
-	Val       string
-	Timestamp time.Time
+	Key string
+	Val string
 }
 
+// used for serialization
 type medium struct {
 	Queries []query `json:"queries"`
 }
@@ -112,12 +115,7 @@ func (q QueryList) flush(f *os.File) error {
 		return err
 	}
 
-	var m medium
-	for k, v := range q {
-		m.Queries = append(m.Queries, query{Key: k, Val: v, Timestamp: time.Now()})
-	}
-
-	bytes, err := json.Marshal(m)
+	bytes, err := json.Marshal(toMedium(q))
 	if err != nil {
 		return err
 	}
@@ -150,5 +148,22 @@ func parse(f *os.File) (QueryList, error) {
 		ql.add(q.Key, q.Val)
 	}
 
-	return ql, nil
+	return toQueryList(m), nil
+}
+
+func toMedium(ql QueryList) medium {
+	var m medium
+	for k, v := range ql {
+		m.Queries = append(m.Queries, query{Key: k, Val: v})
+	}
+	return m
+}
+
+// construct the query list from serialized format
+func toQueryList(m medium) QueryList {
+	var ql = QueryList{}
+	for _, q := range m.Queries {
+		ql.add(q.Key, q.Val)
+	}
+	return ql
 }
