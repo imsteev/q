@@ -130,7 +130,7 @@ func parse(f *os.File) (QueryList, error) {
 
 	bytes, err := io.ReadAll(f)
 	if err != nil {
-		return QueryList{}, err
+		return ql, err
 	}
 
 	// return early so we don't err out trying to parse nothing.
