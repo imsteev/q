@@ -6,11 +6,18 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"time"
 )
 
-var (
-	QUERY_LIST_PATH = `querylist`
-)
+var QUERYLIST_FILE_PATH string
+
+func init() {
+	if envPath := os.Getenv("QUERYLIST_FILE"); envPath != "" {
+		QUERYLIST_FILE_PATH = envPath
+	} else {
+		QUERYLIST_FILE_PATH = "querylist"
+	}
+}
 
 func main() {
 
@@ -22,10 +29,16 @@ func main() {
 	flag.Parse()
 	positional := flag.Args()
 
-	ql, qlf, err := parseQueryList()
+	ql, err := parse()
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	file, err := os.OpenFile(QUERYLIST_FILE_PATH, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer file.Close()
 
 	flag.Visit(func(f *flag.Flag) {
 		if f.Name == "add" && len(positional) != 1 {
@@ -33,16 +46,16 @@ func main() {
 		}
 		if f.Name == "add" {
 			ql.add(f.Value.String(), positional[0])
-			ql.flush(qlf)
+			ql.flush(file)
+			ql.print()
 		}
 		if f.Name == "clear" {
 			ql = QueryList{}
-			ql.flush(qlf)
+			ql.flush(file)
 		}
 		if f.Name == "del" {
-			// empty string means deleted
 			ql.delete(f.Value.String())
-			ql.flush(qlf)
+			ql.flush(file)
 		}
 		if f.Name == "list" {
 			ql.print()
@@ -58,7 +71,6 @@ func (q QueryList) delete(key string) {
 }
 func (q QueryList) add(key, val string) {
 	q[key] = val
-	fmt.Println(q)
 }
 
 func (q QueryList) print() {
@@ -67,55 +79,59 @@ func (q QueryList) print() {
 	}
 }
 
-func (q QueryList) flush(f *os.File) error {
-	var qj qjson
-	for k, v := range q {
-		qj.Queries = append(qj.Queries, query{key: k, val: v})
-	}
+type query struct {
+	Key       string
+	Val       string
+	Timestamp time.Time
+}
 
-	bytes, err := json.Marshal(qj)
-	if err != nil {
-		return err
-	}
+type medium struct {
+	Queries []query `json:"queries"`
+}
+
+// flush writes the contents of in-memory QueryList onto disk.
+func (q QueryList) flush(f *os.File) error {
 	if err := f.Truncate(0); err != nil {
 		return err
 	}
+
+	var m medium
+	for k, v := range q {
+		m.Queries = append(m.Queries, query{Key: k, Val: v, Timestamp: time.Now()})
+	}
+
+	bytes, err := json.Marshal(m)
+	if err != nil {
+		return err
+	}
+
 	_, err = f.Write(bytes)
 	return err
 }
 
-type query struct {
-	key string
-	val string
-}
-type qjson struct {
-	Queries []query `json:"queries"`
-}
-
-func parseQueryList() (QueryList, *os.File, error) {
-	f, err := os.OpenFile(QUERY_LIST_PATH, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer f.Close()
-
-	bytes, err := os.ReadFile(QUERY_LIST_PATH)
+// parse reads contents from disk into in-memory QueryList.
+func parse() (QueryList, error) {
+	bytes, err := os.ReadFile(QUERYLIST_FILE_PATH)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	ql := QueryList{}
+	var ql = QueryList{}
 
-	if len(bytes) != 0 {
-		var qj qjson
-		if err := json.Unmarshal(bytes, &qj); err != nil {
-			return nil, nil, err
-		}
-
-		for _, q := range qj.Queries {
-			ql.add(q.key, q.val)
-		}
+	// return early so we don't err out trying to parse nothing.
+	if len(bytes) == 0 {
+		return ql, nil
 	}
 
-	return ql, f, nil
+	var m medium
+	if err := json.Unmarshal(bytes, &m); err != nil {
+		return nil, err
+	}
+
+	// construct the query list from serialized format
+	for _, q := range m.Queries {
+		ql.add(q.Key, q.Val)
+	}
+
+	return ql, nil
 }
