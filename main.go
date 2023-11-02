@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"time"
@@ -15,30 +16,32 @@ func init() {
 	if envPath := os.Getenv("QUERYLIST_FILE"); envPath != "" {
 		QUERYLIST_FILE_PATH = envPath
 	} else {
-		QUERYLIST_FILE_PATH = "querylist"
+		QUERYLIST_FILE_PATH = ".querylist"
 	}
 }
 
 func main() {
 
 	flag.String("add", "", "-add add a named query")
-	flag.Bool("clear", false, "-clear clear all queries")
 	flag.String("del", "", "-del delete query")
+
+	flag.Bool("init", false, "-init setup default storage")
+	flag.Bool("clear", false, "-clear clear all queries")
 	flag.Bool("list", false, "-list list all queries")
 
 	flag.Parse()
 	positional := flag.Args()
-
-	ql, err := parse()
-	if err != nil {
-		log.Fatal(err)
-	}
 
 	file, err := os.OpenFile(QUERYLIST_FILE_PATH, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer file.Close()
+
+	ql, err := parse(file)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	flag.Visit(func(f *flag.Flag) {
 		if f.Name == "add" && len(positional) != 1 {
@@ -57,6 +60,9 @@ func main() {
 			ql.delete(f.Value.String())
 			ql.flush(file)
 		}
+		if f.Name == "init" {
+			// create file
+		}
 		if f.Name == "list" {
 			ql.print()
 		}
@@ -74,8 +80,9 @@ func (q QueryList) add(key, val string) {
 }
 
 func (q QueryList) print() {
-	for k, v := range q {
-		fmt.Println(k, v)
+	fmt.Println("[QUERY NAME]")
+	for k, _ := range q {
+		fmt.Println(k)
 	}
 }
 
@@ -110,13 +117,13 @@ func (q QueryList) flush(f *os.File) error {
 }
 
 // parse reads contents from disk into in-memory QueryList.
-func parse() (QueryList, error) {
-	bytes, err := os.ReadFile(QUERYLIST_FILE_PATH)
-	if err != nil {
-		log.Fatal(err)
-	}
-
+func parse(f *os.File) (QueryList, error) {
 	var ql = QueryList{}
+
+	bytes, err := io.ReadAll(f)
+	if err != nil {
+		return QueryList{}, err
+	}
 
 	// return early so we don't err out trying to parse nothing.
 	if len(bytes) == 0 {
