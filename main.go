@@ -86,13 +86,10 @@ func (q QueryList) display(name string) {
 		if !ok {
 			fmt.Println("❌ QUERY NOT FOUND")
 		} else {
-			fmt.Println("[QUERY NAME]")
-			fmt.Println(name)
-			fmt.Println("[QUERY]")
-			fmt.Println(query)
+			fmt.Printf("✅ [%s]\t%s\n", name, query)
 		}
 	} else {
-		fmt.Println("[QUERY NAME]")
+		fmt.Println("[QUERY]")
 		for k := range q {
 			fmt.Println(k)
 		}
