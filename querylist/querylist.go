@@ -1,11 +1,11 @@
 package querylist
 
 type QueryList struct {
-	m map[string]string
+	queries []*query
 }
 
 func New() *QueryList {
-	return &QueryList{m: map[string]string{}}
+	return &QueryList{queries: []*query{}}
 }
 
 type query struct {
@@ -14,25 +14,29 @@ type query struct {
 }
 
 func (q *QueryList) Items() []*query {
-	var items []*query
-	for k := range q.m {
-		items = append(items, q.Get(k))
-	}
-	return items
+	return q.queries
 }
 
 func (q *QueryList) Get(key string) *query {
-	val, ok := q.m[key]
-	if ok {
-		return &query{Key: key, Val: val}
+	var lastSeen *query
+	for _, query := range q.queries {
+		if query.Key == key {
+			lastSeen = query
+		}
 	}
-	return nil
+	return lastSeen
 }
 
 func (q *QueryList) Add(key, val string) {
-	q.m[key] = val
+	q.queries = append(q.queries, &query{Key: key, Val: val})
 }
 
 func (q *QueryList) Delete(key string) {
-	delete(q.m, key)
+	var filtered []*query
+	for _, query := range q.queries {
+		if query.Key != key {
+			filtered = append(filtered, query)
+		}
+	}
+	q.queries = filtered
 }

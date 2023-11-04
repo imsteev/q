@@ -9,17 +9,17 @@ import (
 
 func Display(q *QueryList, queryName string) {
 	if queryName != "" {
-		query, ok := q.m[queryName]
-		if !ok {
-			fmt.Println("❌ QUERY NOT FOUND")
+		if query := q.Get(queryName); query != nil {
+			fmt.Printf("[%s]\t%s\n", queryName, *query)
 		} else {
-			fmt.Printf("[%s]\t%s\n", queryName, query)
+			fmt.Println("❌ QUERY NOT FOUND")
+
 		}
 	} else {
 		fmt.Println("Queries")
 		i := 1
-		for k := range q.m {
-			fmt.Printf("%d. %s\n", i, k)
+		for _, query := range q.queries {
+			fmt.Printf("%d. %s\n", i, query.Key)
 			i++
 		}
 	}
@@ -36,7 +36,7 @@ func Load(f *os.File) (*QueryList, error) {
 
 	bytes, err := io.ReadAll(f)
 	if err != nil {
-		return ql, err
+		return nil, err
 	}
 
 	// return early so we don't err out trying to parse nothing.
@@ -67,8 +67,9 @@ func Flush(q *QueryList, f *os.File) error {
 	f.Seek(0, 0)
 
 	var m medium
-	for k, v := range q.m {
-		m.Queries = append(m.Queries, &query{Key: k, Val: v})
+	for _, query := range q.queries {
+		query := query // :woozy i don't trust myself
+		m.Queries = append(m.Queries, query)
 	}
 
 	bytes, err := json.Marshal(m)
