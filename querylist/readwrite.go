@@ -28,8 +28,8 @@ type medium struct {
 	Queries []*query `json:"queries"`
 }
 
-// Parse reads contents from disk into in-memory QueryList.
-func Parse(f *os.File) (*QueryList, error) {
+// Load reads from disk into in-memory QueryList.
+func Load(f *os.File) (*QueryList, error) {
 	var ql = New()
 
 	bytes, err := io.ReadAll(f)

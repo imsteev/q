@@ -25,7 +25,7 @@ func main() {
 	}
 	defer file.Close()
 
-	ql, err := querylist.Parse(file)
+	ql, err := querylist.Load(file)
 	if err != nil {
 		panic(err)
 	}
@@ -33,9 +33,7 @@ func main() {
 	flag.String("add", "", "-add add a named query")
 	flag.String("del", "", "-del delete query")
 	flag.String("view", "", "-view view query")
-
 	flag.Bool("all", false, "-all list all queries")
-
 	flag.Parse()
 	positional := flag.Args()
 
