@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
 	"os"
 	"q/querylist"
 )
@@ -10,10 +11,9 @@ import (
 var QUERYLIST_FILE_PATH string
 
 func init() {
-	if envPath := os.Getenv("QUERYLIST_FILE"); envPath != "" {
-		QUERYLIST_FILE_PATH = envPath
-	} else {
-		QUERYLIST_FILE_PATH = ".querylist.json"
+	QUERYLIST_FILE_PATH = os.Getenv("QUERYLIST_FILE_PATH")
+	if QUERYLIST_FILE_PATH == "" {
+		log.Fatal("[MISSING ENV] QUERYLIST_FILE_PATH is not set.")
 	}
 }
 
