@@ -1,8 +1,9 @@
 # q
-query notepad - remember your useful queries!
+q's a query notepad - remember useful queries!
 
 features
 - [ ] auto-complete by query name
+- [ ] ability to edit query in default shell editor
 
 installation
 ```zsh
