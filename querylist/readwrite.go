@@ -64,19 +64,16 @@ func Flush(q *QueryList, f *os.File) error {
 	// Set I/O offset to the start. Truncate does NOT automatically set it.
 	f.Seek(0, 0)
 
-	bytes, err := json.Marshal(toMedium(q))
+	var m medium
+	for k, v := range q.m {
+		m.Queries = append(m.Queries, &query{Key: k, Val: v})
+	}
+
+	bytes, err := json.Marshal(m)
 	if err != nil {
 		return err
 	}
 
 	_, err = f.Write(bytes)
 	return err
-}
-
-func toMedium(ql *QueryList) medium {
-	var m medium
-	for k, v := range ql.m {
-		m.Queries = append(m.Queries, &query{Key: k, Val: v})
-	}
-	return m
 }
