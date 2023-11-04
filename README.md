@@ -1,15 +1,15 @@
 # q
 ### q's a query notepad - remember useful queries!
 
-features
+todo
 - [ ] auto-complete by query name
 - [ ] ability to edit query in default shell editor
 
 installation
 ```zsh
 
-# required environment variable
-echo "export QUERYLIST_FILE_PATH=$(pwd).querylist.json" >> ~/.zshrc
+# choose where you want to store data. the file itself does not need to exist
+export QUERYLIST_FILE_PATH=~/Desktop/.querylist.json
 
 # clone this repo and install the command
 go install .
