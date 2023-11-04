@@ -16,6 +16,12 @@ func init() {
 	}
 }
 
+const (
+	FLAG_ADD    = "add"
+	FLAG_DELETE = "d"
+	FLAG_LIST   = "l"
+)
+
 func main() {
 
 	// Setup in-memory data structure
@@ -30,33 +36,38 @@ func main() {
 		panic(err)
 	}
 
-	flag.String("add", "", "-add add a named query")
-	flag.String("del", "", "-del delete query")
-	flag.String("view", "", "-view view query")
-	flag.Bool("all", false, "-all list all queries")
+	flag.String(FLAG_ADD, "", "-add add a named query")
+	flag.String(FLAG_DELETE, "", "-del delete query")
+	flag.Bool(FLAG_LIST, false, "-l list all queries")
 	flag.Parse()
+
 	positional := flag.Args()
+
+	// usage: <queryname>
+	if flag.NFlag() == 0 && len(positional) == 1 {
+		querylist.Display(ql, positional[0])
+	}
 
 	flag.Visit(func(f *flag.Flag) {
 		name := f.Name
 
-		if name == "add" && len(positional) != 1 {
+		if name == FLAG_ADD && len(positional) != 1 {
 			panic("usage: -add <query name> [query]")
 		}
-		if name == "add" {
+
+		if name == FLAG_ADD {
 			ql.Add(f.Value.String(), positional[0])
 			querylist.Flush(ql, file)
 			querylist.Display(ql, f.Value.String())
 		}
-		if name == "all" {
-			querylist.Display(ql, "")
-		}
-		if name == "del" {
+
+		if name == FLAG_DELETE {
 			ql.Delete(f.Value.String())
 			querylist.Flush(ql, file)
 		}
-		if name == "view" {
-			querylist.Display(ql, f.Value.String())
+
+		if name == FLAG_LIST {
+			querylist.Display(ql, "")
 		}
 
 	})

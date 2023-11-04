@@ -1,9 +1,8 @@
 # q
 
-
 ```
-> q list
-> q add  <queryname> <sql text>
-> q del  <queryname>
-> q view <queryname>
+> q -all
+> q -add <queryname> [text]
+> q -del <queryname>
+> q [queryname]
 ```
