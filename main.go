@@ -17,13 +17,10 @@ func init() {
 	}
 }
 
-const (
-	FLAG_DELETE = "d"
-)
+const FLAG_DELETE = "d"
 
 func main() {
 
-	// Setup in-memory data structure
 	file, err := os.OpenFile(QUERYLIST_FILE_PATH, os.O_CREATE|os.O_RDWR, 0644)
 	if err != nil {
 		panic(err)
