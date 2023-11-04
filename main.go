@@ -34,7 +34,6 @@ func main() {
 
 	flag.String(FLAG_DELETE, "", "-del delete query")
 	flag.Parse()
-
 	positional := flag.Args()
 
 	if flag.NFlag() == 0 {
@@ -55,14 +54,17 @@ func main() {
 			querylist.Flush(ql, file)
 			querylist.DisplayQuery(ql, positional[0])
 		}
+
+		return
 	}
 
-	flag.Visit(func(f *flag.Flag) {
-		if f.Name == FLAG_DELETE {
-			ql.Delete(f.Value.String())
+	if flg := flag.Lookup(FLAG_DELETE); flg != nil {
+		queryName := flg.Value.String()
+		if ql.Delete(queryName) {
 			querylist.Flush(ql, file)
-			fmt.Printf("Deleted query: %q\n", f.Value.String())
+			fmt.Printf("Deleted query: %q\n", queryName)
+		} else {
+			fmt.Printf("❌ Could not find query: %q\n", queryName)
 		}
-
-	})
+	}
 }

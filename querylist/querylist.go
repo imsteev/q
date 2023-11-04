@@ -31,12 +31,14 @@ func (q *QueryList) Add(key, val string) {
 	q.queries = append(q.queries, &query{Key: key, Val: val})
 }
 
-func (q *QueryList) Delete(key string) {
+func (q *QueryList) Delete(key string) bool {
 	var filtered []*query
 	for _, query := range q.queries {
 		if query.Key != key {
 			filtered = append(filtered, query)
 		}
 	}
+	deleted := len(filtered) != len(q.queries)
 	q.queries = filtered
+	return deleted
 }

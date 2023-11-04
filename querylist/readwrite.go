@@ -11,8 +11,7 @@ func DisplayQuery(q *QueryList, key string) {
 	if query := q.Get(key); query != nil {
 		fmt.Printf("[%s]\t%s\n", query.Key, query.Val)
 	} else {
-		fmt.Println("❌ QUERY NOT FOUND")
-
+		fmt.Printf("❌ Could not find query: %q\n", key)
 	}
 }
 
