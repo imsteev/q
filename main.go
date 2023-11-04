@@ -8,20 +8,18 @@ import (
 	"q/querylist"
 )
 
-var QUERYLIST_FILE_PATH string
-
-func init() {
-	QUERYLIST_FILE_PATH = os.Getenv("QUERYLIST_FILE_PATH")
-	if QUERYLIST_FILE_PATH == "" {
-		log.Fatal("[MISSING ENV] QUERYLIST_FILE_PATH is not set.")
-	}
-}
-
-const FLAG_DELETE = "d"
+const (
+	FLAG_DELETE = "d"
+)
 
 func main() {
 
-	file, err := os.OpenFile(QUERYLIST_FILE_PATH, os.O_CREATE|os.O_RDWR, 0644)
+	filePath := os.Getenv("QUERYLIST_FILE_PATH")
+	if filePath == "" {
+		log.Fatal("[MISSING ENV] QUERYLIST_FILE_PATH is not set.")
+	}
+
+	file, err := os.OpenFile(filePath, os.O_CREATE|os.O_RDWR, 0644)
 	if err != nil {
 		panic(err)
 	}
@@ -32,39 +30,40 @@ func main() {
 		panic(err)
 	}
 
-	flag.String(FLAG_DELETE, "", "-del delete query")
-	flag.Parse()
-	positional := flag.Args()
-
-	if flag.NFlag() == 0 {
-
-		// usage: q
-		if len(positional) == 0 {
-			querylist.DisplayAll(ql)
-		}
-
-		// usage: q [key]
-		if len(positional) == 1 {
-			querylist.DisplayQuery(ql, positional[0])
-		}
-
-		// usage: q [key] [value]
-		if len(positional) == 2 {
-			ql.Add(positional[0], positional[1])
-			querylist.Flush(ql, file)
-			querylist.DisplayQuery(ql, positional[0])
-		}
-
-		return
-	}
-
-	if flg := flag.Lookup(FLAG_DELETE); flg != nil {
-		queryName := flg.Value.String()
+	flag.Func(FLAG_DELETE, "-d <queryname>", func(queryName string) error {
 		if ql.Delete(queryName) {
 			querylist.Flush(ql, file)
 			fmt.Printf("Deleted query: %q\n", queryName)
 		} else {
 			fmt.Printf("❌ Could not find query: %q\n", queryName)
 		}
+		return nil
+	})
+
+	flag.Parse()
+
+	// handle when only positional args exist
+	if flag.NFlag() == 0 {
+		args := flag.Args()
+
+		// usage: q
+		if len(args) == 0 {
+			querylist.DisplayAll(ql)
+		}
+
+		// usage: q [key]
+		if len(args) == 1 {
+			querylist.DisplayQuery(ql, args[0])
+		}
+
+		// usage: q [key] [value]
+		if len(args) == 2 {
+			ql.Add(args[0], args[1])
+			querylist.Flush(ql, file)
+			querylist.DisplayQuery(ql, args[0])
+		}
+
+		return
 	}
+
 }
