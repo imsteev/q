@@ -1,5 +1,5 @@
 # q
-q's a query notepad - remember useful queries!
+### q's a query notepad - remember useful queries!
 
 features
 - [ ] auto-complete by query name
