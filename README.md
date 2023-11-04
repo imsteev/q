@@ -1,6 +1,9 @@
 # q
 query notepad - remember your useful queries!
 
+features
+- [ ] auto-complete by query name
+
 installation
 ```zsh
 # clone this repo and cd into it
