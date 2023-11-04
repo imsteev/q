@@ -13,12 +13,14 @@ func Display(q *QueryList, queryName string) {
 		if !ok {
 			fmt.Println("❌ QUERY NOT FOUND")
 		} else {
-			fmt.Printf("✅ [%s]\t%s\n", queryName, query)
+			fmt.Printf("[%s]\t%s\n", queryName, query)
 		}
 	} else {
-		fmt.Println("[QUERY]")
+		fmt.Println("Queries")
+		i := 1
 		for k := range q.m {
-			fmt.Println(k)
+			fmt.Printf("%d. %s\n", i, k)
+			i++
 		}
 	}
 }
