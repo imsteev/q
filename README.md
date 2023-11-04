@@ -30,8 +30,7 @@ Queries
 1. revenue-from-tickets
 2. revenue-from-saas
 
-# delete revenue-from-tickets
-~/go/src/q [main] q -d revenue-from-tickets
+> q -d revenue-from-tickets
 Deleted query: "revenue-from-saas"
 
 > q
