@@ -7,7 +7,11 @@ features
 
 installation
 ```zsh
-# clone this repo and cd into it
+
+# required environment variable
+echo "export QUERYLIST_FILE_PATH=$(pwd).querylist.json" >> ~/.zshrc
+
+# clone this repo and install the command
 go install .
 ```
 
