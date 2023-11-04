@@ -41,19 +41,19 @@ func main() {
 
 		// usage: q
 		if len(positional) == 0 {
-			querylist.Display(ql, "")
+			querylist.DisplayAll(ql)
 		}
 
 		// usage: q [key]
 		if len(positional) == 1 {
-			querylist.Display(ql, positional[0])
+			querylist.DisplayQuery(ql, positional[0])
 		}
 
 		// usage: q [key] [value]
 		if len(positional) == 2 {
 			ql.Add(positional[0], positional[1])
 			querylist.Flush(ql, file)
-			querylist.Display(ql, positional[0])
+			querylist.DisplayQuery(ql, positional[0])
 		}
 	}
 

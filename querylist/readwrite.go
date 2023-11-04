@@ -7,21 +7,21 @@ import (
 	"os"
 )
 
-func Display(q *QueryList, queryName string) {
-	if queryName != "" {
-		if query := q.Get(queryName); query != nil {
-			fmt.Printf("[%s]\t%s\n", queryName, *query)
-		} else {
-			fmt.Println("❌ QUERY NOT FOUND")
-
-		}
+func DisplayQuery(q *QueryList, key string) {
+	if query := q.Get(key); query != nil {
+		fmt.Printf("[%s]\t%s\n", query.Key, query.Val)
 	} else {
-		fmt.Println("Queries")
-		i := 1
-		for _, query := range q.queries {
-			fmt.Printf("%d. %s\n", i, query.Key)
-			i++
-		}
+		fmt.Println("❌ QUERY NOT FOUND")
+
+	}
+}
+
+func DisplayAll(q *QueryList) {
+	fmt.Println("Queries")
+	i := 1
+	for _, query := range q.queries {
+		fmt.Printf("%d. %s\n", i, query.Key)
+		i++
 	}
 }
 
@@ -73,6 +73,7 @@ func Flush(q *QueryList, f *os.File) error {
 		query := query // :woozy i don't trust myself
 		if !seen[query.Key] {
 			m.Queries = append(m.Queries, query)
+			seen[query.Key] = true
 		}
 	}
 
